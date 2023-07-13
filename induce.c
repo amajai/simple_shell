@@ -5,9 +5,10 @@
 #include <sys/wait.h>
 
 /**
- * pass - Breaks down arguement entered
+ * main - Breaks down arguement entered
  * @ac: number of arguements
  * @av: arguements entered
+ * @env: bash enviroments
  * Return: 0
  */
 
@@ -21,7 +22,7 @@ int main(int ac, char **av, char **env)
 	pid_t pid;
 	int status = 0;
 
-	printf("Hello$ ");
+	write(1, "$ ", 2);
 	while ((cmd = getline(&buffer, &n, stdin)) != EOF)
 	{
 		cmds = malloc(sizeof(char *) * 2);
@@ -47,10 +48,8 @@ int main(int ac, char **av, char **env)
 			wait(&status);
 		}
 		free(cmds);
-		printf("Ha$ ");
+		write(1, "$ ", 2);
 	}
-	if(cmds != NULL)
-		free(cmds);
 
 	return (0);
 }
