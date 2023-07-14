@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include "main.h"
 
 /**
@@ -16,7 +17,7 @@ int main(int ac, char **av, char **env)
 {
 	size_t n = 0;
 	pid_t pid;
-	char *buffer = NULL, *token, *dupbuff;
+	char *buffer = NULL, *token, *dupbuff, *ppath;
 	int cmd, status;
 
 	(void)ac;
@@ -25,16 +26,21 @@ int main(int ac, char **av, char **env)
 	{
 		dupbuff = _strdup(buffer);
 		token = strtok(dupbuff, " \n");
-		pid = fork();
-		if (pid == -1)
+		ppath = process_input(token);
+		if (ppath != NULL)
 		{
-			perror("Error:");
-			return (1);
+			pid = fork();
+			if (pid == -1)
+			{
+				perror("Error:");
+				return (1);
+			}
+			else if (pid == 0)
+				execute(ppath, buffer, env, av[0]);
+			else
+				wait(&status);
 		}
-		else if (pid == 0)
-			execute(token, buffer, env, av[0]);
-		else
-			wait(&status);
+		free(ppath);
 		free(dupbuff);
 		isatty(STDIN_FILENO) ? write(1, "$ ", 2) : write(1, "", 0);
 	}
@@ -83,4 +89,45 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
 		free(buffer);
 		exit(EXIT_FAILURE);
 	}
+}
+
+/**
+* process_input - checks if pname input is a valid program path.
+* @pname: program name
+*
+* Return: pname or new path if succesful
+* NULL if pname is not a valid program path
+*/
+char *process_input(char *pname)
+{
+	struct stat st;
+	char *token, *new_path, *paths;
+	unsigned int token_len, pname_len;
+
+	if (stat(pname, &st) == 0)
+		return (pname);
+
+	paths = malloc(sizeof(char) * (_strlen(_getenv("PATH")) + 1));
+	if (paths == NULL)
+		return (NULL);
+	_strcpy(paths, _getenv("PATH"));
+	token = strtok(paths, ":");
+	while (token != NULL)
+	{
+		token_len = _strlen(token);
+		pname_len = _strlen(pname);
+		new_path = malloc(sizeof(char) * (token_len + pname_len + 2));
+		if (new_path == NULL)
+			return (NULL);
+		joinpath(new_path, token, token_len, pname, pname_len);
+		if (stat(new_path, &st) == 0)
+		{
+			free(paths);
+			return (new_path);
+		}
+		free(new_path);
+		token = strtok(NULL, ":");
+	}
+	free(paths);
+	return (NULL);
 }
