@@ -3,9 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include "main.h"
 
 /**
- * main - Breaks down arguement entered
+ * main - A UNIX command line interpreter.
  * @ac: number of arguements
  * @av: arguements entered
  * @env: bash enviroments
@@ -15,18 +16,17 @@
 int main(int ac, char **av, char **env)
 {
 	size_t n = 0;
-	char *buffer = NULL;
-	char **cmds = NULL;
-	char *token;
-	int cmd;
 	pid_t pid;
-	int status = 0;
+	char *buffer = NULL, **cmds = NULL, *token, *dupbuff;
+	int cmd, status;
 
-	write(1, "$ ", 2);
+	(void)ac;
+	isatty(STDIN_FILENO) ? write(1, "$ ", 2) : write(1, "", 0);
 	while ((cmd = getline(&buffer, &n, stdin)) != EOF)
 	{
 		cmds = malloc(sizeof(char *) * 2);
-		token = strtok(buffer, "\n");
+		dupbuff = _strdup(buffer);
+		token = strtok(dupbuff, "\n");
 		cmds[0] = token;
 		cmds[1] = NULL;
 		pid = fork();
@@ -40,16 +40,18 @@ int main(int ac, char **av, char **env)
 			if (execve(cmds[0], cmds, env) == EOF)
 			{
 				perror(av[0]);
+				free(dupbuff);
+				free(cmds);
+				free(buffer);
 				return (1);
 			}
 		}
 		else
-		{
 			wait(&status);
-		}
 		free(cmds);
-		write(1, "$ ", 2);
+		free(dupbuff);
+		isatty(STDIN_FILENO) ? write(1, "$ ", 2) : write(1, "", 0);
 	}
-
+	free(buffer);
 	return (0);
 }
