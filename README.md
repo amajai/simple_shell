@@ -1,0 +1,2 @@
+# 0x16. C - Simple Shell
+A small scale simple UNIX Command Interpreter project aimed at developing a basic command-line interpreter for UNIX-like systems. The program allows users to enter commands, which are then executed by the interpreter.
