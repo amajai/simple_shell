@@ -105,7 +105,7 @@ char *process_input(char *pname)
 	unsigned int token_len, pname_len;
 
 	if (stat(pname, &st) == 0)
-		return (pname);
+		return (_strdup(pname));
 
 	paths = malloc(sizeof(char) * (_strlen(_getenv("PATH")) + 1));
 	if (paths == NULL)
