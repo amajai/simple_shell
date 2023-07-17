@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include "main.h"
 
 /**
  * get_cmds - Get all commands seperated by semi-colon if present and add them
@@ -13,8 +14,22 @@
 char **get_cmds(char *buffer)
 {
 	char *token, **arr;
-	int i = 0, j = 0, cmd_count = 0;
+	int i = 0, j = 0, cmd_count = 0, start = 0, end = _strlen(buffer) - 1;
 
+	while (buffer[start] == ' ' || buffer[start] == '\t')
+		start++;
+
+	while (end > start && buffer[end] == ' ')
+		end--;
+
+	for (i = 0; start <= end; i++, start++)
+	{
+		buffer[i] = buffer[start];
+	}
+
+	buffer[i] = '\0';
+
+	i = 0;
 	while (buffer[i] != '\0')
 	{
 		if (buffer[i] == ';')
