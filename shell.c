@@ -26,7 +26,7 @@ int main(int ac, char **av, char **env)
 	{
 		dupbuff = _strdup(buffer);
 		token = strtok(dupbuff, " \n");
-		ppath = process_input(token);
+		ppath = process_input(token, buffer);
 		if (ppath != NULL)
 		{
 			pid = fork();
@@ -98,7 +98,7 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
 * Return: pname or new path if succesful
 * NULL if pname is not a valid program path
 */
-char *process_input(char *pname)
+char *process_input(char *pname, char *buffer)
 {
 	struct stat st;
 	char *token, *new_path, *paths;
@@ -106,6 +106,12 @@ char *process_input(char *pname)
 
 	if (stat(pname, &st) == 0)
 		return (_strdup(pname));
+	if (_strcmp("exit", pname) == 0)
+	{
+		free(buffer);
+		free(pname);
+		exit(0);
+	}
 
 	paths = malloc(sizeof(char) * (_strlen(_getenv("PATH")) + 1));
 	if (paths == NULL)
