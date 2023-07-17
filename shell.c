@@ -17,36 +17,44 @@ int main(int ac, char **av, char **env)
 {
 	size_t n = 0;
 	pid_t pid;
-	char *buffer = NULL, *token, *dupbuff, *ppath;
-	int cmd, status;
+	char *buffer = NULL, *token, *dupbuff, *ppath, **cmds;
+	int cmd, status, i = 0;
 
 	(void)ac;
 	isatty(STDIN_FILENO) ? write(1, "$ ", 2) : write(1, "", 0);
 	while ((cmd = getline(&buffer, &n, stdin)) != EOF)
 	{
-		dupbuff = _strdup(buffer);
-		token = strtok(dupbuff, " \n");
-		ppath = process_input(token, buffer);
-		if (ppath != NULL)
+		cmds = get_cmds(buffer);
+		i = 0;
+		while (cmds[i] != NULL)
 		{
-			pid = fork();
-			if (pid == -1)
+			dupbuff = _strdup(cmds[i]);
+			token = strtok(dupbuff, " \n");
+			ppath = process_input(token, buffer, cmds);
+			if (ppath != NULL)
 			{
-				perror("Error:");
-				return (1);
+				pid = fork();
+				if (pid == -1)
+				{
+					perror("Error:");
+					return (1);
+				}
+				else if (pid == 0)
+					execute(ppath, cmds[i], env, av[0]);
+				else
+					waitpid(pid, &status, 0);
 			}
-			else if (pid == 0)
-				execute(ppath, buffer, env, av[0]);
-			else
-				wait(&status);
+			free(ppath);
+			free(dupbuff);
+			i++;
 		}
-		free(ppath);
-		free(dupbuff);
+		freelist(cmds);
 		isatty(STDIN_FILENO) ? write(1, "$ ", 2) : write(1, "", 0);
 	}
 	free(buffer);
 	return (0);
 }
+
 
 /**
  * execute - execute program through execve function for a given path.
@@ -94,11 +102,12 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
 /**
 * process_input - checks if pname input is a valid program path.
 * @pname: program name
-*
+* @buffer: command line input buffer
+* @cmds: array of commands
 * Return: pname or new path if succesful
 * NULL if pname is not a valid program path
 */
-char *process_input(char *pname, char *buffer)
+char *process_input(char *pname, char *buffer, char **cmds)
 {
 	struct stat st;
 	char *token, *new_path, *paths;
@@ -109,6 +118,7 @@ char *process_input(char *pname, char *buffer)
 	if (_strcmp("exit", pname) == 0)
 	{
 		free(buffer);
+		freelist(cmds);
 		free(pname);
 		exit(0);
 	}
