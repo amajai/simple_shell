@@ -81,15 +81,15 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
 	argv = malloc(sizeof(char *) * (arg_count + 1));
 	if (argv == NULL)
 		exit(EXIT_FAILURE);
-	argv[i] = ppath;
 	token = strtok(buffer, " \n");
+	argv[i] = token;
 	while (token != NULL)
 	{
 		token = strtok(NULL, " \n");
 		argv[++i] = token;
 	}
 	argv[i] = NULL;
-	if (execve(argv[0], argv, env) == EOF)
+	if (execve(ppath, argv, env) == EOF)
 	{
 		perror(execname);
 		free(ppath);
