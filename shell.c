@@ -30,7 +30,7 @@ int main(int ac, char **av, char **env)
 		{
 			dupbuff = _strdup(cmds[i]);
 			token = strtok(dupbuff, " \n");
-			ppath = process_input(token, buffer, cmds);
+			ppath = process_input(token, buffer, cmds, av[0]);
 			if (ppath != NULL)
 			{
 				pid = fork();
@@ -81,15 +81,15 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
 	argv = malloc(sizeof(char *) * (arg_count + 1));
 	if (argv == NULL)
 		exit(EXIT_FAILURE);
-	argv[i] = ppath;
 	token = strtok(buffer, " \n");
+	argv[i] = token;
 	while (token != NULL)
 	{
 		token = strtok(NULL, " \n");
 		argv[++i] = token;
 	}
 	argv[i] = NULL;
-	if (execve(argv[0], argv, env) == EOF)
+	if (execve(ppath, argv, env) == EOF)
 	{
 		perror(execname);
 		free(ppath);
@@ -104,15 +104,18 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
 * @pname: program name
 * @buffer: command line input buffer
 * @cmds: array of commands
+* @arg: Name of the executable the shell is run from
 * Return: pname or new path if succesful
 * NULL if pname is not a valid program path
 */
-char *process_input(char *pname, char *buffer, char **cmds)
+char *process_input(char *pname, char *buffer, char **cmds, char *arg)
 {
 	struct stat st;
 	char *token, *new_path, *paths;
 	unsigned int token_len, pname_len;
+	static unsigned int count_cmds = 1;
 
+	count_cmds++;
 	if (stat(pname, &st) == 0)
 		return (_strdup(pname));
 	if (_strcmp("exit", pname) == 0)
@@ -145,5 +148,6 @@ char *process_input(char *pname, char *buffer, char **cmds)
 		token = strtok(NULL, ":");
 	}
 	free(paths);
+	error_disp(pname, count_cmds, arg);
 	return (NULL);
 }
