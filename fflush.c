@@ -13,7 +13,10 @@ void error_disp(char *cmd, unsigned int count, char *arg)
 {
 	count -= 1;
 
-	write(2, arg, _strlen(arg));
+	if (isatty(STDIN_FILENO))
+		write(2, arg, _strlen(arg));
+	else
+		write(2, "hsh", 3);
 	write(2, ": ", 2);
 	write(2, cmd, _strlen(cmd));
 	write(2, ": ", 2);
