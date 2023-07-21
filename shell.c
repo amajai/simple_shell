@@ -114,16 +114,21 @@ char *process_input(char *pname, char *buffer, char **cmds, char *arg)
 	char *token, *new_path, *paths;
 	unsigned int token_len, pname_len;
 	static unsigned int count_cmds = 1;
+	int num = 0;
 
 	count_cmds++;
 	if (stat(pname, &st) == 0)
 		return (_strdup(pname));
 	if (_strcmp("exit", pname) == 0)
 	{
+		token = strtok(NULL, " \n");
+		if (token != NULL)
+			num = _atoi(token);
 		free(buffer);
 		freelist(cmds);
 		free(pname);
-		exit(0);
+		
+		exit(num);
 	}
 
 	paths = malloc(sizeof(char) * (_strlen(_getenv("PATH")) + 1));
