@@ -15,4 +15,5 @@ void freelist(char **arr);
 void error_disp(char *cmd, unsigned int count, char *arg);
 int _putchar(char c);
 int _atoi(char *s);
+int process_cmds(char **cmds, char *buffer, char *exec, char **env);
 #endif

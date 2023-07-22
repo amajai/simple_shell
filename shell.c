@@ -16,45 +16,61 @@
 int main(int ac, char **av, char **env)
 {
 	size_t n = 0;
-	pid_t pid;
-	char *buffer = NULL, *token, *dupbuff, *ppath, **cmds;
-	int cmd, status, i = 0;
+	char *buffer = NULL, **cmds;
+	int cmd;
 
 	(void)ac;
 	isatty(STDIN_FILENO) ? write(1, "$ ", 2) : write(1, "", 0);
 	while ((cmd = getline(&buffer, &n, stdin)) != EOF)
 	{
 		cmds = get_cmds(buffer);
-		i = 0;
-		while (cmds[i] != NULL)
-		{
-			dupbuff = _strdup(cmds[i]);
-			token = strtok(dupbuff, " \n");
-			ppath = process_input(token, buffer, cmds, av[0]);
-			if (ppath != NULL)
-			{
-				pid = fork();
-				if (pid == -1)
-				{
-					perror("Error:");
-					return (1);
-				}
-				else if (pid == 0)
-					execute(ppath, cmds[i], env, av[0]);
-				else
-					waitpid(pid, &status, 0);
-			}
-			free(ppath);
-			free(dupbuff);
-			i++;
-		}
+		if (cmds)
+			process_cmds(cmds, buffer, av[0], env);
 		freelist(cmds);
 		isatty(STDIN_FILENO) ? write(1, "$ ", 2) : write(1, "", 0);
 	}
 	free(buffer);
 	return (0);
 }
+/**
+ * process_cmds - Process input command line.
+ * @cmds: array of commands
+ * @buffer: command line string
+ * @exec: shell executable filename
+ * @env: environment variables
+ *
+ * Return: 0
+ */
+int process_cmds(char **cmds, char *buffer, char *exec, char **env)
+{
+	char *token, *dupbuff, *ppath;
+	int i = 0, status;
+	pid_t pid;
 
+	while (cmds[i] != NULL)
+	{
+		dupbuff = _strdup(cmds[i]);
+		token = strtok(dupbuff, " \n");
+		ppath = process_input(token, buffer, cmds, exec);
+		if (ppath != NULL)
+		{
+			pid = fork();
+			if (pid == -1)
+			{
+				perror("Error:");
+				return (1);
+			}
+			else if (pid == 0)
+				execute(ppath, cmds[i], env, exec);
+			else
+				waitpid(pid, &status, 0);
+		}
+		free(ppath);
+		free(dupbuff);
+		i++;
+	}
+	return (0);
+}
 
 /**
  * execute - execute program through execve function for a given path.
