@@ -100,6 +100,27 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
 }
 
 /**
+ * exit_call - exit the shell
+ * @buffer: commands inputed
+ * @cmds: array of buffers
+ * @pname: program name
+ */
+
+void exit_call(char *buffer, char **cmds, char *pname)
+{
+	int num = 0;
+	char *token;
+
+	token = strtok(NULL, " \n");
+	if (token != NULL)
+		num = _atoi(token);
+	free(buffer);
+	freelist(cmds);
+	free(pname);
+	exit(num);
+}
+
+/**
 * process_input - checks if pname input is a valid program path.
 * @pname: program name
 * @buffer: command line input buffer
@@ -114,22 +135,12 @@ char *process_input(char *pname, char *buffer, char **cmds, char *arg)
 	char *token, *new_path, *paths;
 	unsigned int token_len, pname_len;
 	static unsigned int count_cmds = 1;
-	int num = 0;
 
 	count_cmds++;
 	if (stat(pname, &st) == 0)
 		return (_strdup(pname));
 	if (_strcmp("exit", pname) == 0)
-	{
-		token = strtok(NULL, " \n");
-		if (token != NULL)
-			num = _atoi(token);
-		free(buffer);
-		freelist(cmds);
-		free(pname);
-		
-		exit(num);
-	}
+		exit_call(buffer, cmds, pname);
 
 	paths = malloc(sizeof(char) * (_strlen(_getenv("PATH")) + 1));
 	if (paths == NULL)
