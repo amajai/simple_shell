@@ -29,4 +29,14 @@ int _putchar(char c);
 int _atoi(char *s);
 int process_cmds(char *buffer, char *exec, char **env, alias_t ***as);
 char *get_path(char *pname, char *buf);
+void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
+void trim(char **str);
+int check_d_alias(char *str);
+void add_alias(struct alias ***aliases, char *name, char *value, int *alias_c);
+void print_all_alias(struct alias **aliases);
+void print_alias(char *alias, struct alias **aliases);
+char **get_alias_args(char *alias_cmdline);
+void process_alias(char *alias_cmdline, struct alias ***aliases, int *alias_c);
+void free_all_alias(struct alias **aliases);
+void exit_call(char *buffer, char **cmds, char *pname, alias_t ***as);
 #endif
