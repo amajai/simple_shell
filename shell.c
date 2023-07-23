@@ -16,17 +16,15 @@
 int main(int ac, char **av, char **env)
 {
 	size_t n = 0;
-	char *buffer = NULL, **cmds;
+	char *buffer = NULL;
 	int cmd;
+	alias_t **aliases = NULL;
 
 	(void)ac;
 	isatty(STDIN_FILENO) ? write(1, "$ ", 2) : write(1, "", 0);
 	while ((cmd = getline(&buffer, &n, stdin)) != EOF)
 	{
-		cmds = get_cmds(buffer);
-		if (cmds)
-			process_cmds(cmds, buffer, av[0], env);
-		freelist(cmds);
+		process_cmds(buffer, av[0], env, &aliases);
 		isatty(STDIN_FILENO) ? write(1, "$ ", 2) : write(1, "", 0);
 	}
 	free(buffer);
@@ -34,24 +32,24 @@ int main(int ac, char **av, char **env)
 }
 /**
  * process_cmds - Process input command line.
- * @cmds: array of commands
  * @buffer: command line string
  * @exec: shell executable filename
  * @env: environment variables
+ * @as: list of aliases
  *
  * Return: 0
  */
-int process_cmds(char **cmds, char *buffer, char *exec, char **env)
+int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 {
-	char *token, *dupbuff, *ppath;
+	char *ppath, **cmds;
 	int i = 0, status;
 	pid_t pid;
 
+	(void)as;
+	cmds = get_cmds(buffer);
 	while (cmds[i] != NULL)
 	{
-		dupbuff = _strdup(cmds[i]);
-		token = strtok(dupbuff, " \n");
-		ppath = process_input(token, buffer, cmds, exec);
+		ppath = p_input(cmds[i], buffer, cmds, exec, as);
 		if (ppath != NULL)
 		{
 			pid = fork();
@@ -66,9 +64,9 @@ int process_cmds(char **cmds, char *buffer, char *exec, char **env)
 				waitpid(pid, &status, 0);
 		}
 		free(ppath);
-		free(dupbuff);
 		i++;
 	}
+	freelist(cmds);
 	return (0);
 }
 
@@ -104,7 +102,7 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
 		token = strtok(NULL, " \n");
 		argv[++i] = token;
 	}
-	argv[i] = NULL;
+
 	if (execve(ppath, argv, env) == EOF)
 	{
 		perror(execname);
@@ -137,49 +135,34 @@ void exit_call(char *buffer, char **cmds, char *pname)
 }
 
 /**
-* process_input - checks if pname input is a valid program path.
-* @pname: program name
-* @buffer: command line input buffer
+* p_input - checks if pname input is a valid program path.
+* @buf: program name
+* @bufs: command line input buffer
 * @cmds: array of commands
 * @arg: Name of the executable the shell is run from
+* @as: list of aliases
 * Return: pname or new path if succesful
 * NULL if pname is not a valid program path
 */
-char *process_input(char *pname, char *buffer, char **cmds, char *arg)
+char *p_input(char *buf, char *bufs, char **cmds, char *arg, alias_t ***as)
 {
 	struct stat st;
-	char *token, *new_path, *paths;
-	unsigned int token_len, pname_len;
+	char *path, *pname, *dupbuf;
 	static unsigned int count_cmds = 1;
 
+	(void)as;
+	dupbuf = _strdup(buf);
+	pname = strtok(dupbuf, " \n");
 	count_cmds++;
 	if (stat(pname, &st) == 0)
 		return (_strdup(pname));
 	if (_strcmp("exit", pname) == 0)
-		exit_call(buffer, cmds, pname);
+		exit_call(bufs, cmds, dupbuf);
 
-	paths = malloc(sizeof(char) * (_strlen(_getenv("PATH")) + 1));
-	if (paths == NULL)
-		return (NULL);
-	_strcpy(paths, _getenv("PATH"));
-	token = strtok(paths, ":");
-	while (token != NULL)
-	{
-		token_len = _strlen(token);
-		pname_len = _strlen(pname);
-		new_path = malloc(sizeof(char) * (token_len + pname_len + 2));
-		if (new_path == NULL)
-			return (NULL);
-		joinpath(new_path, token, token_len, pname, pname_len);
-		if (stat(new_path, &st) == 0)
-		{
-			free(paths);
-			return (new_path);
-		}
-		free(new_path);
-		token = strtok(NULL, ":");
-	}
-	free(paths);
+	path = get_path(pname, dupbuf);
+	if (path != NULL)
+		return (path);
 	error_disp(pname, count_cmds, arg);
+	free(dupbuf);
 	return (NULL);
 }
