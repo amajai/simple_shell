@@ -41,7 +41,7 @@ char **get_cmds(char *buffer)
 	token = strtok(buffer, ";\n");
 	while (token != NULL)
 	{
-		(arr)[j] = malloc(sizeof(char) * (strlen(token) + 1));
+		(arr)[j] = malloc(sizeof(char) * (_strlen(token) + 1));
 		strcpy((arr)[j++], token);
 		token = strtok(NULL, ";\n");
 	}
