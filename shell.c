@@ -27,6 +27,8 @@ int main(int ac, char **av, char **env)
 		process_cmds(buffer, av[0], env, &aliases);
 		isatty(STDIN_FILENO) ? write(1, "$ ", 2) : write(1, "", 0);
 	}
+	if (aliases != NULL)
+		free_all_alias(aliases);
 	free(buffer);
 	return (0);
 }
@@ -118,9 +120,10 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
  * @buffer: commands inputed
  * @cmds: array of buffers
  * @pname: program name
+ * @as: list of aliases
  */
 
-void exit_call(char *buffer, char **cmds, char *pname)
+void exit_call(char *buffer, char **cmds, char *pname, alias_t ***as)
 {
 	int num = 0;
 	char *token;
@@ -131,6 +134,7 @@ void exit_call(char *buffer, char **cmds, char *pname)
 	free(buffer);
 	freelist(cmds);
 	free(pname);
+	free_all_alias(*as);
 	exit(num);
 }
 
@@ -149,6 +153,7 @@ char *p_input(char *buf, char *bufs, char **cmds, char *arg, alias_t ***as)
 	struct stat st;
 	char *path, *pname, *dupbuf;
 	static unsigned int count_cmds = 1;
+	static int alias_count = 1;
 
 	(void)as;
 	dupbuf = _strdup(buf);
@@ -157,8 +162,13 @@ char *p_input(char *buf, char *bufs, char **cmds, char *arg, alias_t ***as)
 	if (stat(pname, &st) == 0)
 		return (_strdup(pname));
 	if (_strcmp("exit", pname) == 0)
-		exit_call(bufs, cmds, dupbuf);
-
+		exit_call(bufs, cmds, dupbuf, as);
+	if (_strcmp("alias", pname) == 0)
+	{
+		process_alias(buf, as, &alias_count);
+		free(dupbuf);
+		return (NULL);
+	}
 	path = get_path(pname, dupbuf);
 	if (path != NULL)
 		return (path);
