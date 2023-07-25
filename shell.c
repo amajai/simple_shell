@@ -43,15 +43,20 @@ int main(int ac, char **av, char **env)
  */
 int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 {
-	char *ppath, **cmds;
+	char *ppath = NULL, **cmds;
 	int i = 0, status;
 	pid_t pid;
+	static int alias_count = 1;
 
-	(void)as;
 	cmds = get_cmds(buffer);
 	while (cmds[i] != NULL)
 	{
-		ppath = p_input(cmds[i], buffer, cmds, exec, as);
+		if (_strncmp("alias", cmds[i], 5) == 0)
+			process_alias(cmds[i], as, &alias_count);
+		else if (_strncmp("exit", cmds[i], 4) == 0)
+			exit_call(buffer, cmds, as);
+		else
+			ppath = p_input(cmds[i], exec);
 		if (ppath != NULL)
 		{
 			pid = fork();
@@ -65,7 +70,8 @@ int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 			else
 				waitpid(pid, &status, 0);
 		}
-		free(ppath);
+		if (ppath != NULL)
+			free(ppath);
 		i++;
 	}
 	freelist(cmds);
@@ -119,11 +125,10 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
  * exit_call - exit the shell
  * @buffer: commands inputed
  * @cmds: array of buffers
- * @pname: program name
  * @as: list of aliases
  */
 
-void exit_call(char *buffer, char **cmds, char *pname, alias_t ***as)
+void exit_call(char *buffer, char **cmds, alias_t ***as)
 {
 	int num = 0;
 	char *token;
@@ -133,7 +138,6 @@ void exit_call(char *buffer, char **cmds, char *pname, alias_t ***as)
 		num = _atoi(token);
 	free(buffer);
 	freelist(cmds);
-	free(pname);
 	free_all_alias(*as);
 	exit(num);
 }
@@ -141,34 +145,21 @@ void exit_call(char *buffer, char **cmds, char *pname, alias_t ***as)
 /**
 * p_input - checks if pname input is a valid program path.
 * @buf: program name
-* @bufs: command line input buffer
-* @cmds: array of commands
 * @arg: Name of the executable the shell is run from
-* @as: list of aliases
 * Return: pname or new path if succesful
 * NULL if pname is not a valid program path
 */
-char *p_input(char *buf, char *bufs, char **cmds, char *arg, alias_t ***as)
+char *p_input(char *buf, char *arg)
 {
 	struct stat st;
 	char *path, *pname, *dupbuf;
 	static unsigned int count_cmds = 1;
-	static int alias_count = 1;
 
-	(void)as;
 	dupbuf = _strdup(buf);
 	pname = strtok(dupbuf, " \n");
 	count_cmds++;
 	if (stat(pname, &st) == 0)
 		return (_strdup(pname));
-	if (_strcmp("exit", pname) == 0)
-		exit_call(bufs, cmds, dupbuf, as);
-	if (_strcmp("alias", pname) == 0)
-	{
-		process_alias(buf, as, &alias_count);
-		free(dupbuf);
-		return (NULL);
-	}
 	path = get_path(pname, dupbuf);
 	if (path != NULL)
 		return (path);
