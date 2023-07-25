@@ -17,20 +17,20 @@ int main(int ac, char **av, char **env)
 {
 	size_t n = 0;
 	char *buffer = NULL;
-	int cmd;
+	int cmd, ps;
 	alias_t **aliases = NULL;
 
 	(void)ac;
 	isatty(STDIN_FILENO) ? write(1, "$ ", 2) : write(1, "", 0);
 	while ((cmd = getline(&buffer, &n, stdin)) != EOF)
 	{
-		process_cmds(buffer, av[0], env, &aliases);
+		ps = process_cmds(buffer, av[0], env, &aliases);
 		isatty(STDIN_FILENO) ? write(1, "$ ", 2) : write(1, "", 0);
 	}
 	if (aliases != NULL)
 		free_all_alias(aliases);
 	free(buffer);
-	return (0);
+	return (ps);
 }
 /**
  * process_cmds - Process input command line.
@@ -44,7 +44,7 @@ int main(int ac, char **av, char **env)
 int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 {
 	char *ppath = NULL, **cmds;
-	int i = 0, status;
+	int i = 0, status, ps = 0;
 	pid_t pid;
 	static int alias_count = 1;
 
@@ -56,7 +56,7 @@ int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 		else if (_strncmp("exit", cmds[i], 4) == 0)
 			exit_call(buffer, cmds, as);
 		else
-			ppath = p_input(cmds[i], exec);
+			ppath = p_input(cmds[i], exec, env);
 		if (ppath != NULL)
 		{
 			pid = fork();
@@ -69,13 +69,16 @@ int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 				execute(ppath, cmds[i], env, exec);
 			else
 				waitpid(pid, &status, 0);
+			ps = chkpstatus(status);
 		}
+		else
+			ps = 127;
 		if (ppath != NULL)
 			free(ppath);
 		i++;
 	}
 	freelist(cmds);
-	return (0);
+	return (ps);
 }
 
 /**
@@ -133,12 +136,14 @@ void exit_call(char *buffer, char **cmds, alias_t ***as)
 	int num = 0;
 	char *token;
 
+	token = strtok(buffer, " \n");
 	token = strtok(NULL, " \n");
 	if (token != NULL)
 		num = _atoi(token);
 	free(buffer);
 	freelist(cmds);
-	free_all_alias(*as);
+	if((*as) != NULL)
+		free_all_alias(*as);
 	exit(num);
 }
 
@@ -146,10 +151,11 @@ void exit_call(char *buffer, char **cmds, alias_t ***as)
 * p_input - checks if pname input is a valid program path.
 * @buf: program name
 * @arg: Name of the executable the shell is run from
+* @env: array of environment variables.
 * Return: pname or new path if succesful
 * NULL if pname is not a valid program path
 */
-char *p_input(char *buf, char *arg)
+char *p_input(char *buf, char *arg, char **env)
 {
 	struct stat st;
 	char *path, *pname, *dupbuf;
@@ -158,12 +164,24 @@ char *p_input(char *buf, char *arg)
 	dupbuf = _strdup(buf);
 	pname = strtok(dupbuf, " \n");
 	count_cmds++;
-	if (stat(pname, &st) == 0)
-		return (_strdup(pname));
-	path = get_path(pname, dupbuf);
-	if (path != NULL)
-		return (path);
-	error_disp(pname, count_cmds, arg);
-	free(dupbuf);
+	if (_strchr(buf, '/') != NULL)
+	{
+		if (stat(pname, &st) == 0)
+			return (_strdup(pname));
+	}
+	else
+	{
+		if (env == NULL || _getenv("PATH") == NULL)
+		{
+			error_disp(pname, count_cmds, arg);
+			free(dupbuf);
+			return (NULL);
+		}
+		path = get_path(pname, dupbuf);
+		if (path != NULL)
+			return (path);
+		error_disp(pname, count_cmds, arg);
+		free(dupbuf);
+	}
 	return (NULL);
 }
