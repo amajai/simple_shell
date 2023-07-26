@@ -44,17 +44,20 @@ int main(int ac, char **av, char **env)
 int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 {
 	char *ppath = NULL, **cmds;
-	int i = 0, ps = 0;
+	int i = 0, ps = 0, res = 1;
 	pid_t pid;
 	static int alias_count = 1, status;
 
 	cmds = get_cmds(buffer);
 	while (cmds[i] != NULL)
 	{
+		res = 1;
 		if (_strncmp("alias", cmds[i], 5) == 0)
 			process_alias(cmds[i], as, &alias_count);
 		else if (_strncmp("exit", cmds[i], 4) == 0)
 			exit_call(buffer, cmds, &status, as);
+		else if (_strncmp("env", cmds[i], 3) == 0)
+			res = print_env(env);
 		else
 			ppath = p_input(cmds[i], exec, env);
 		if (ppath != NULL)
@@ -72,7 +75,7 @@ int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 			ps = chkpstatus(status);
 		}
 		else
-			ps = 127;
+			ps = get_status(res);
 		if (ppath != NULL)
 			free(ppath);
 		i++;

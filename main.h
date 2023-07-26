@@ -41,4 +41,6 @@ void free_all_alias(struct alias **aliases);
 void exit_call(char *buffer, char **cmds, int *stat, alias_t ***as);
 int chkpstatus(int status);
 char *_strchr(char *str, int c);
+int print_env(char **env);
+int get_status(int res);
 #endif
