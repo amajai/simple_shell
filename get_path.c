@@ -33,6 +33,7 @@ char *get_path(char *pname, char *buf)
 		if (stat(new_path, &st) == 0)
 		{
 			free(paths);
+			free(pname);
 			free(buf);
 			return (new_path);
 		}
