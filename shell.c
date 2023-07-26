@@ -149,8 +149,12 @@ void exit_call(char *buffer, char **cmds, int *stat, alias_t ***as)
 	if ((*as) != NULL)
 		free_all_alias(*as);
 	if (WIFEXITED(*stat))
-		exit(WEXITSTATUS(*stat));
-	exit(num);
+	{
+		if (token != NULL)
+			exit(num);
+		else
+			exit(WEXITSTATUS(*stat));
+	}
 }
 
 /**
