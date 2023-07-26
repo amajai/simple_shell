@@ -11,15 +11,27 @@
 
 void error_disp(char *cmd, unsigned int count, char *arg)
 {
-	count -= 1;
+	char count_str[4];
+	int temp = count - 1;
+	int digit_count = 0;
 
-	if (isatty(STDIN_FILENO))
-		write(2, arg, _strlen(arg));
-	else
-		write(2, "hsh", 3);
+	while (temp != 0)
+	{
+		digit_count++;
+		temp /= 10;
+	}
+	temp = count - 1;
+	count_str[digit_count] = '\0';
+	while (digit_count > 0)
+	{
+		digit_count--;
+		count_str[digit_count] = temp % 10 + '0';
+		temp /= 10;
+	}
+	write(2, arg, _strlen(arg));
+	write(2, ": ", 2);
+	write(2, count_str, _strlen(count_str));
 	write(2, ": ", 2);
 	write(2, cmd, _strlen(cmd));
-	write(2, ": ", 2);
-	_putchar(count + '0');
 	write(2, ": not found\n", 12);
 }
