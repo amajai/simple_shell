@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "main.h"
 
 /**
@@ -34,4 +35,5 @@ void error_disp(char *cmd, unsigned int count, char *arg)
 	write(2, ": ", 2);
 	write(2, cmd, _strlen(cmd));
 	write(2, ": not found\n", 12);
+	free(cmd);
 }
