@@ -165,12 +165,15 @@ char *p_input(char *buf, char *arg, char **env)
 	static unsigned int count_cmds = 1;
 
 	dupbuf = _strdup(buf);
-	pname = strtok(dupbuf, " \n");
+	pname = _strdup(strtok(dupbuf, " \n"));
 	count_cmds++;
 	if (_strchr(buf, '/') != NULL)
 	{
 		if (stat(pname, &st) == 0)
-			return (_strdup(pname));
+		{
+			free(dupbuf);
+			return (pname);
+		}
 	}
 	else
 	{
