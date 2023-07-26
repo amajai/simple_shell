@@ -44,9 +44,9 @@ int main(int ac, char **av, char **env)
 int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 {
 	char *ppath = NULL, **cmds;
-	int i = 0, status, ps = 0;
+	int i = 0, ps = 0;
 	pid_t pid;
-	static int alias_count = 1;
+	static int alias_count = 1, status;
 
 	cmds = get_cmds(buffer);
 	while (cmds[i] != NULL)
@@ -54,7 +54,7 @@ int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 		if (_strncmp("alias", cmds[i], 5) == 0)
 			process_alias(cmds[i], as, &alias_count);
 		else if (_strncmp("exit", cmds[i], 4) == 0)
-			exit_call(buffer, cmds, as);
+			exit_call(buffer, cmds, &status, as);
 		else
 			ppath = p_input(cmds[i], exec, env);
 		if (ppath != NULL)
@@ -120,7 +120,7 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
 		free(ppath);
 		free(argv);
 		free(buffer);
-		exit(EXIT_FAILURE);
+		exit(2);
 	}
 }
 
@@ -128,10 +128,11 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
  * exit_call - exit the shell
  * @buffer: commands inputed
  * @cmds: array of buffers
+ * @stat: check return status for child process.
  * @as: list of aliases
  */
 
-void exit_call(char *buffer, char **cmds, alias_t ***as)
+void exit_call(char *buffer, char **cmds, int *stat, alias_t ***as)
 {
 	int num = 0;
 	char *token;
@@ -142,8 +143,10 @@ void exit_call(char *buffer, char **cmds, alias_t ***as)
 		num = _atoi(token);
 	free(buffer);
 	freelist(cmds);
-	if((*as) != NULL)
+	if ((*as) != NULL)
 		free_all_alias(*as);
+	if (WIFEXITED(*stat))
+		exit(WEXITSTATUS(*stat));
 	exit(num);
 }
 
@@ -177,11 +180,11 @@ char *p_input(char *buf, char *arg, char **env)
 			free(dupbuf);
 			return (NULL);
 		}
-		path = get_path(pname, dupbuf);
-		if (path != NULL)
-			return (path);
-		error_disp(pname, count_cmds, arg);
-		free(dupbuf);
 	}
+	path = get_path(pname, dupbuf);
+	if (path != NULL)
+		return (path);
+	error_disp(pname, count_cmds, arg);
+	free(dupbuf);
 	return (NULL);
 }
