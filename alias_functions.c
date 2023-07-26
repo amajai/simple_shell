@@ -11,9 +11,9 @@
  * @alias_c: alias count
  * Return: Nothing
  */
-void process_alias(char *alias_cmdline, struct alias ***aliases, int *alias_c)
+int process_alias(char *alias_cmdline, struct alias ***aliases, int *alias_c)
 {
-	char **args, *name, *value;
+	char **args, *name = NULL, *value = NULL;
 	int i = 0;
 
 	args = get_alias_args(alias_cmdline);
@@ -21,7 +21,7 @@ void process_alias(char *alias_cmdline, struct alias ***aliases, int *alias_c)
 	if (_strcmp(args[i], "alias") != 0)
 	{
 		freelist(args);
-		return;
+		return (0);
 	}
 	i++;
 	while (args[i] != NULL)
@@ -31,8 +31,8 @@ void process_alias(char *alias_cmdline, struct alias ***aliases, int *alias_c)
 		{
 			if (check_d_alias(args[i]) == 0)
 			{
-				name = _strdup(strtok(args[i], "='\""));
-				value = _strdup(strtok(NULL, "='\""));
+				name = strtok(args[i], "='\"");
+				value = strtok(NULL, "='\"");
 				add_alias(aliases, name, value, alias_c);
 			}
 			else
@@ -47,6 +47,7 @@ void process_alias(char *alias_cmdline, struct alias ***aliases, int *alias_c)
 	if (i == 1)
 		print_all_alias(*aliases);
 	freelist(args);
+	return (0);
 }
 
 /**
@@ -121,14 +122,16 @@ void add_alias(struct alias ***aliases, char *name, char *value, int *alias_c)
 		{
 			if (_strcmp(name, (*aliases)[i]->name) == 0)
 			{
-				(*aliases)[i]->value = value;
+				free((*aliases)[i]->value);
+				(*aliases)[i]->value = _strdup(value);
+				free(new_alias);
 				return;
 			}
 			i++;
 		}
 	}
-	new_alias->name = name;
-	new_alias->value = value;
+	new_alias->name = _strdup(name);
+	new_alias->value = _strdup(value);
 	if (*aliases == NULL)
 	{
 		*aliases = malloc(sizeof(struct alias) * 2);
@@ -165,11 +168,10 @@ void print_alias(char *alias, struct alias **aliases)
 			{
 				name = aliases[i]->name;
 				value = aliases[i]->value;
-				write(STDERR_FILENO, "alias ", 6);
-				write(STDERR_FILENO, name, _strlen(name));
-				write(STDERR_FILENO, "='", 2);
-				write(STDERR_FILENO, value, _strlen(value));
-				write(STDERR_FILENO, "'\n", 2);
+				write(1, name, _strlen(name));
+				write(1, "='", 2);
+				write(1, value, _strlen(value));
+				write(1, "'\n", 2);
 				is_found = 0;
 				break;
 			}
@@ -178,9 +180,9 @@ void print_alias(char *alias, struct alias **aliases)
 	}
 	if (is_found == 1)
 	{
-		write(STDERR_FILENO, "alias: ", 7);
-		write(STDERR_FILENO, alias, _strlen(alias));
-		write(STDERR_FILENO, " not found\n", 11);
+		write(1, "alias: ", 7);
+		write(1, alias, _strlen(alias));
+		write(1, " not found\n", 11);
 	}
 }
 
@@ -201,11 +203,10 @@ void print_all_alias(struct alias **aliases)
 		{
 			name = aliases[i]->name;
 			value = aliases[i]->value;
-			write(STDERR_FILENO, "alias ", 6);
-			write(STDERR_FILENO, name, _strlen(name));
-			write(STDERR_FILENO, "='", 2);
-			write(STDERR_FILENO, value, _strlen(value));
-			write(STDERR_FILENO, "'\n", 2);
+			write(1, name, _strlen(name));
+			write(1, "='", 2);
+			write(1, value, _strlen(value));
+			write(1, "'\n", 2);
 			i++;
 		}
 	}

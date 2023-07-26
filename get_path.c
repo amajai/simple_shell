@@ -17,6 +17,11 @@ char *get_path(char *pname, char *buf)
 	unsigned int token_len, pname_len;
 	struct stat st;
 
+	if (stat(pname, &st) == 0)
+	{
+		free(buf);
+		return (pname);
+	}
 	paths = malloc(sizeof(char) * (_strlen(_getenv("PATH")) + 1));
 	if (paths == NULL)
 		return (NULL);
