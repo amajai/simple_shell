@@ -53,13 +53,13 @@ int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 	{
 		res = 1;
 		if (_strncmp("alias", cmds[i], 5) == 0)
-			process_alias(cmds[i], as, &alias_count);
+			res = process_alias(cmds[i], as, &alias_count);
 		else if (_strncmp("exit", cmds[i], 4) == 0)
 			exit_call(buffer, cmds, &status, as);
 		else if (_strncmp("env", cmds[i], 3) == 0)
 			res = print_env(env);
 		else
-			ppath = p_input(cmds[i], exec, env);
+			ppath = p_input(cmds[i], exec, env, *as);
 		if (ppath != NULL)
 		{
 			pid = fork();
@@ -158,17 +158,18 @@ void exit_call(char *buffer, char **cmds, int *stat, alias_t ***as)
 * @buf: program name
 * @arg: Name of the executable the shell is run from
 * @env: array of environment variables.
+ *@aliases: list of aliases
 * Return: pname or new path if succesful
 * NULL if pname is not a valid program path
 */
-char *p_input(char *buf, char *arg, char **env)
+char *p_input(char *buf, char *arg, char **env, alias_t **aliases)
 {
 	struct stat st;
 	char *path, *pname, *dupbuf;
 	static unsigned int count_cmds = 1;
 
 	dupbuf = _strdup(buf);
-	pname = _strdup(strtok(dupbuf, " \n"));
+	pname = check_value(strtok(dupbuf, " \n"), aliases);
 	count_cmds++;
 	if (_strchr(buf, '/') != NULL)
 	{
