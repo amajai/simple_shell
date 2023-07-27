@@ -38,7 +38,7 @@ void print_alias(char *alias, struct alias **aliases);
 char **get_alias_args(char *alias_cmdline);
 int process_alias(char *alias_cmdline, struct alias ***aliases, int *alias_c);
 void free_all_alias(struct alias **aliases);
-void exit_call(char *buffer, char **cmds, int *stat, alias_t ***as);
+void exit_call(char *buffer, char **cmds, int *stat, alias_t ***as, int count);
 int chkpstatus(int status);
 char *_strchr(char *str, int c);
 int print_env(char **env);
