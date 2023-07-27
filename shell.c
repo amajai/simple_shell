@@ -46,9 +46,8 @@ int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 	char *ppath = NULL, **cmds;
 	int i = 0, ps = 0, res = 1;
 	pid_t pid;
-	static int alias_count = 1, status, count = 1;
+	static int alias_count = 1, status;
 
-	count++;
 	cmds = get_cmds(buffer);
 	while (cmds[i] != NULL)
 	{
@@ -56,7 +55,7 @@ int process_cmds(char *buffer, char *exec, char **env, alias_t ***as)
 		if (_strncmp("alias", cmds[i], 5) == 0)
 			res = process_alias(cmds[i], as, &alias_count);
 		else if (_strncmp("exit", cmds[i], 4) == 0)
-			exit_call(buffer, cmds, &status, as, count);
+			exit_call(buffer, cmds, &status, as);
 		else if (_strncmp("env", cmds[i], 3) == 0)
 			res = print_env(env);
 		else
@@ -134,31 +133,17 @@ void execute(char *ppath, char *buffer, char **env, char *execname)
  * @cmds: array of buffers
  * @stat: check return status for child process.
  * @as: list of aliases
- * @count: exit command interruptions
  */
 
-void exit_call(char *buffer, char **cmds, int *stat, alias_t ***as, int count)
+void exit_call(char *buffer, char **cmds, int *stat, alias_t ***as)
 {
 	int num = 0;
 	char *token;
 
-	count--;
 	token = strtok(buffer, " \n");
 	token = strtok(NULL, " \n");
 	if (token != NULL)
-	{
-		if (_isdigit(token))
-			num = _atoi(token);
-		else
-		{
-			write(2, "./hsh: ", 7);
-			_putchar(count + '0');
-			write(2, ": exit: Illegal number: ", 24);
-			write(2, token, _strlen(token));
-			_putchar('\n');
-			return;
-		}
-	}
+		num = _atoi(token);
 	free(buffer);
 	freelist(cmds);
 	if ((*as) != NULL)

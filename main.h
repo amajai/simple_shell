@@ -38,11 +38,10 @@ void print_alias(char *alias, struct alias **aliases);
 char **get_alias_args(char *alias_cmdline);
 int process_alias(char *alias_cmdline, struct alias ***aliases, int *alias_c);
 void free_all_alias(struct alias **aliases);
-void exit_call(char *buffer, char **cmds, int *stat, alias_t ***as, int count);
+void exit_call(char *buffer, char **cmds, int *stat, alias_t ***as);
 int chkpstatus(int status);
 char *_strchr(char *str, int c);
 int print_env(char **env);
 int get_status(int res);
 char *check_value(char *pname, alias_t **aliases);
-int _isdigit(char *str);
 #endif
