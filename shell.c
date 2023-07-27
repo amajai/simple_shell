@@ -143,7 +143,17 @@ void exit_call(char *buffer, char **cmds, int *stat, alias_t ***as)
 	token = strtok(buffer, " \n");
 	token = strtok(NULL, " \n");
 	if (token != NULL)
-		num = _atoi(token);
+	{
+		if (_isdigit(token))
+			num = _atoi(token);
+		else
+		{
+			write(2, "./hsh: 1: exit: Illegal number: ", 32);
+			write(2, token, _strlen(token));
+			_putchar('\n');
+			return;
+		}
+	}
 	free(buffer);
 	freelist(cmds);
 	if ((*as) != NULL)

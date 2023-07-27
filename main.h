@@ -44,4 +44,5 @@ char *_strchr(char *str, int c);
 int print_env(char **env);
 int get_status(int res);
 char *check_value(char *pname, alias_t **aliases);
+int _isdigit(char *str);
 #endif
